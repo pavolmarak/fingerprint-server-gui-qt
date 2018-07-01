@@ -1,2 +1,2 @@
-# dbox-server-gui
-Server app for DBOX
+# Qt-server-gui
+Server app example.
