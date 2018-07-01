@@ -199,7 +199,7 @@
             <bool>true</bool>
            </property>
            <property name="columnCount">
-            <number>4</number>
+            <number>5</number>
            </property>
            <attribute name="horizontalHeaderCascadingSectionResizes">
             <bool>true</bool>
@@ -220,6 +220,7 @@
            <column/>
            <column/>
            <column/>
+           <column/>
           </widget>
          </item>
         </layout>
@@ -235,7 +236,7 @@
      <x>0</x>
      <y>0</y>
      <width>748</width>
-     <height>22</height>
+     <height>30</height>
     </rect>
    </property>
   </widget>

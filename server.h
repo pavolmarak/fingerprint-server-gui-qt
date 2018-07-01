@@ -31,6 +31,7 @@ private:
     Ui::Server *ui;
     QTcpServer server;
     QTcpSocket* tcpsocket;
+    QList<QTcpSocket*> tcpsockets;
 };
 
 #endif // SERVER_H

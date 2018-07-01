@@ -8,8 +8,8 @@ Server::Server(QWidget *parent) :
     ui->setupUi(this);
     QObject::connect(&(this->server), SIGNAL(newConnection()), this, SLOT(connectionSlot()));
     // client list setup
-    ui->client_list_table->setColumnCount(4);
-    ui->client_list_table->setHorizontalHeaderLabels(QStringList() << "IP" << "Port" << "Socket Descriptor" << "Action");
+    ui->client_list_table->setColumnCount(5);
+    ui->client_list_table->setHorizontalHeaderLabels(QStringList() << "IP" << "Port" << "Socket ID" << "Status" << "Action");
 }
 
 Server::~Server()
@@ -25,23 +25,30 @@ Server::~Server()
 void Server::connectionSlot()
 {
     this->tcpsocket =  this->server.nextPendingConnection();
+    this->tcpsockets.push_back(this->tcpsocket);
+    qDebug() << (this->tcpsockets);
     QObject::connect(this->tcpsocket, SIGNAL(readyRead()), this, SLOT(readSlot()));
-    qDebug() << "Connection has arrived from remote IP " << this->tcpsocket->peerAddress().toString() << "@" << this->tcpsocket->peerPort() << " " << this->tcpsocket->peerName();
+    qDebug() << "Connection has arrived from remote IP " << this->tcpsocket->peerAddress().toString() << "@" << this->tcpsocket->peerPort();
     ui->client_list_table->insertRow(0);
     QTableWidgetItem * itemIP = new QTableWidgetItem(this->tcpsocket->peerAddress().toString());
     QTableWidgetItem * itemPort = new QTableWidgetItem(QString::number(this->tcpsocket->peerPort()));
     QTableWidgetItem * itemSocketDescriptor = new QTableWidgetItem(QString::number(this->tcpsocket->socketDescriptor()));
+    QTableWidgetItem * itemStatus = new QTableWidgetItem("Connected");
+
     ui->client_list_table->setItem(0,0,itemIP);
     ui->client_list_table->setItem(0,1,itemPort);
     ui->client_list_table->setItem(0,2,itemSocketDescriptor);
-    ui->client_list_table->setCellWidget(0,3,new QPushButton("Disconnect"));
-    QObject::connect((QPushButton*)ui->client_list_table->cellWidget(0,3),SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
+    ui->client_list_table->setItem(0,3,itemStatus);
+    ui->client_list_table->setCellWidget(0,4,new QPushButton("Disconnect"));
+
+    QObject::connect((QPushButton*)ui->client_list_table->cellWidget(0,4),SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
     //columns width
-    ui->client_list_table->setColumnWidth(0, ui->client_list_table->width()/4);
-    ui->client_list_table->setColumnWidth(1, ui->client_list_table->width()/4);
-    ui->client_list_table->setColumnWidth(2, ui->client_list_table->width()/4);
-    ui->client_list_table->setColumnWidth(3, ui->client_list_table->width()/4);
-    ui->client_list_table->cellWidget(0,3)->setStyleSheet("background-color:rgb(155,0,0); color:white;");
+    ui->client_list_table->setColumnWidth(0, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(1, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(2, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(3, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(4, ui->client_list_table->width()/5);
+    ui->client_list_table->cellWidget(0,4)->setStyleSheet("background-color:rgb(155,0,0); color:white;");
 }
 
 void Server::readSlot()
@@ -53,8 +60,16 @@ void Server::readSlot()
 
 void Server::disconnectClientSlot(bool)
 {
-    qDebug() << matches.length();
-    this->tcpsocket->disconnectFromHost();
+    QWidget *w = qobject_cast<QWidget *>(sender()->parent());
+    if(w){
+        int row = ui->client_list_table->indexAt(w->pos()).row();
+        qDebug() << row;
+        this->tcpsockets.at(row)->disconnectFromHost();
+        this->tcpsockets.removeAt(row);
+        ui->client_list_table->removeRow(row);
+        ui->client_list_table->setCurrentCell(0, 0);
+    }
+
 }
 
 void Server::on_start_server_button_clicked()
