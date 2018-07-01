@@ -8,8 +8,8 @@ Server::Server(QWidget *parent) :
     ui->setupUi(this);
     QObject::connect(&(this->server), SIGNAL(newConnection()), this, SLOT(connectionSlot()));
     // client list setup
-    ui->client_list_table->setColumnCount(2);
-    ui->client_list_table->setHorizontalHeaderLabels(QStringList() << "IP" << "Port");
+    ui->client_list_table->setColumnCount(4);
+    ui->client_list_table->setHorizontalHeaderLabels(QStringList() << "IP" << "Port" << "Socket Descriptor" << "Action");
 }
 
 Server::~Server()
@@ -30,8 +30,18 @@ void Server::connectionSlot()
     ui->client_list_table->insertRow(0);
     QTableWidgetItem * itemIP = new QTableWidgetItem(this->tcpsocket->peerAddress().toString());
     QTableWidgetItem * itemPort = new QTableWidgetItem(QString::number(this->tcpsocket->peerPort()));
+    QTableWidgetItem * itemSocketDescriptor = new QTableWidgetItem(QString::number(this->tcpsocket->socketDescriptor()));
     ui->client_list_table->setItem(0,0,itemIP);
     ui->client_list_table->setItem(0,1,itemPort);
+    ui->client_list_table->setItem(0,2,itemSocketDescriptor);
+    ui->client_list_table->setCellWidget(0,3,new QPushButton("Disconnect"));
+    QObject::connect((QPushButton*)ui->client_list_table->cellWidget(0,3),SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
+    //columns width
+    ui->client_list_table->setColumnWidth(0, ui->client_list_table->width()/4);
+    ui->client_list_table->setColumnWidth(1, ui->client_list_table->width()/4);
+    ui->client_list_table->setColumnWidth(2, ui->client_list_table->width()/4);
+    ui->client_list_table->setColumnWidth(3, ui->client_list_table->width()/4);
+    ui->client_list_table->cellWidget(0,3)->setStyleSheet("background-color:rgb(155,0,0); color:white;");
 }
 
 void Server::readSlot()
@@ -39,6 +49,12 @@ void Server::readSlot()
     QByteArray message = this->tcpsocket->readAll();
     qDebug() << "Message from client: " << message;
     this->tcpsocket->write("Hello from server");
+}
+
+void Server::disconnectClientSlot(bool)
+{
+    qDebug() << matches.length();
+    this->tcpsocket->disconnectFromHost();
 }
 
 void Server::on_start_server_button_clicked()

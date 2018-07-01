@@ -22,10 +22,9 @@ public:
 public slots:
     void connectionSlot();
     void readSlot();
-
+    void disconnectClientSlot(bool);
 private slots:
     void on_start_server_button_clicked();
-
     void on_stop_server_button_clicked();
 
 private:
