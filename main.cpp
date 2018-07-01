@@ -1,11 +1,11 @@
-#include "dboxserver.h"
+#include "server.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    DBoxServer w;
-    w.show();
+    Server server;
+    server.show();
 
     return a.exec();
 }

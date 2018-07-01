@@ -1,9 +1,9 @@
-#include "dboxserver.h"
-#include "ui_dboxserver.h"
+#include "server.h"
+#include "ui_server.h"
 
-DBoxServer::DBoxServer(QWidget *parent) :
+Server::Server(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::DBoxServer)
+    ui(new Ui::Server)
 {
     ui->setupUi(this);
     QObject::connect(&(this->server), SIGNAL(newConnection()), this, SLOT(connectionSlot()));
@@ -12,7 +12,7 @@ DBoxServer::DBoxServer(QWidget *parent) :
     ui->client_list_table->setHorizontalHeaderLabels(QStringList() << "IP" << "Port");
 }
 
-DBoxServer::~DBoxServer()
+Server::~Server()
 {
     if(this->server.isListening()){
         this->server.close();
@@ -22,7 +22,7 @@ DBoxServer::~DBoxServer()
     delete ui;
 }
 
-void DBoxServer::connectionSlot()
+void Server::connectionSlot()
 {
     this->tcpsocket =  this->server.nextPendingConnection();
     QObject::connect(this->tcpsocket, SIGNAL(readyRead()), this, SLOT(readSlot()));
@@ -34,14 +34,14 @@ void DBoxServer::connectionSlot()
     ui->client_list_table->setItem(0,1,itemPort);
 }
 
-void DBoxServer::readSlot()
+void Server::readSlot()
 {
     QByteArray message = this->tcpsocket->readAll();
     qDebug() << "Message from client: " << message;
     this->tcpsocket->write("Hello from server");
 }
 
-void DBoxServer::on_start_server_button_clicked()
+void Server::on_start_server_button_clicked()
 {
     this->server.listen(QHostAddress(ui->server_ip->text()),ui->server_port->text().toUInt());
     if(this->server.isListening()){
@@ -55,7 +55,7 @@ void DBoxServer::on_start_server_button_clicked()
     }
 }
 
-void DBoxServer::on_stop_server_button_clicked()
+void Server::on_stop_server_button_clicked()
 {
     if(this->server.isListening()){
         this->server.close();

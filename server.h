@@ -1,5 +1,5 @@
-#ifndef DBOXSERVER_H
-#define DBOXSERVER_H
+#ifndef SERVER_H
+#define SERVER_H
 
 #include <QMainWindow>
 #include <QObject>
@@ -8,16 +8,16 @@
 #include <QDebug>
 
 namespace Ui {
-class DBoxServer;
+class Server;
 }
 
-class DBoxServer : public QMainWindow
+class Server : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit DBoxServer(QWidget *parent = 0);
-    ~DBoxServer();
+    explicit Server(QWidget *parent = 0);
+    ~Server();
 
 public slots:
     void connectionSlot();
@@ -29,9 +29,9 @@ private slots:
     void on_stop_server_button_clicked();
 
 private:
-    Ui::DBoxServer *ui;
+    Ui::Server *ui;
     QTcpServer server;
     QTcpSocket* tcpsocket;
 };
 
-#endif // DBOXSERVER_H
+#endif // SERVER_H

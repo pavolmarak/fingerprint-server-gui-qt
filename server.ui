@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DBoxServer</class>
- <widget class="QMainWindow" name="DBoxServer">
+ <class>Server</class>
+ <widget class="QMainWindow" name="Server">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>DBoxServer</string>
+   <string>Simple Qt Server</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -203,7 +203,7 @@
      <x>0</x>
      <y>0</y>
      <width>543</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
