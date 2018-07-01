@@ -8,7 +8,7 @@ QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = dbox-server-gui
+TARGET = qt-server-gui
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -25,10 +25,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        dboxserver.cpp
+        server.cpp
 
 HEADERS += \
-        dboxserver.h
+        server.h
 
 FORMS += \
-        dboxserver.ui
+        server.ui
