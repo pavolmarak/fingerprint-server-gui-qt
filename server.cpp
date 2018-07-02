@@ -10,6 +10,12 @@ Server::Server(QWidget *parent) :
     // client list setup
     ui->client_list_table->setColumnCount(5);
     ui->client_list_table->setHorizontalHeaderLabels(QStringList() << "IP" << "Port" << "Socket ID" << "Status" << "Action");
+    //columns width
+    ui->client_list_table->setColumnWidth(0, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(1, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(2, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(3, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(4, ui->client_list_table->width()/5);
 }
 
 Server::~Server()
@@ -22,14 +28,24 @@ Server::~Server()
     delete ui;
 }
 
+// slot for a new connection
 void Server::connectionSlot()
 {
+    // storing the new connection as current connection
     this->tcpsocket =  this->server.nextPendingConnection();
+
+    // pushing the new connection to the QList of connections
     this->tcpsockets.push_back(this->tcpsocket);
-    qDebug() << (this->tcpsockets);
+
+    // connecting socket signal to their handling slots
     QObject::connect(this->tcpsocket, SIGNAL(readyRead()), this, SLOT(readSlot()));
     QObject::connect(this->tcpsocket, SIGNAL(disconnected()),this, SLOT(clientDisconnectedSlot()));
+    QObject::connect(this->tcpsocket, SIGNAL(aboutToClose()),this, SLOT(aboutToCloseSlot()));    QObject::connect(this->tcpsocket, SIGNAL(aboutToClose()),this, SLOT(aboutToCloseSlot()));
+    QObject::connect(this->tcpsocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)),this, SLOT(stateChangedSlot(QAbstractSocket::SocketState)));
     qDebug() << "Connection has arrived from remote IP " << this->tcpsocket->peerAddress().toString() << "@" << this->tcpsocket->peerPort();
+
+
+    // creating a new table row for the new connection
     ui->client_list_table->insertRow(0);
     QTableWidgetItem * itemIP = new QTableWidgetItem(this->tcpsocket->peerAddress().toString());
     QTableWidgetItem * itemPort = new QTableWidgetItem(QString::number(this->tcpsocket->peerPort()));
@@ -40,20 +56,14 @@ void Server::connectionSlot()
     ui->client_list_table->setItem(0,1,itemPort);
     ui->client_list_table->setItem(0,2,itemSocketDescriptor);
     ui->client_list_table->setItem(0,3,itemStatus);
+
+    // creating Disconnect button for each connection
     QPushButton* btn = new QPushButton("Disconnect");
-    btn->setObjectName("row_"+QString::number(ui->client_list_table->rowCount()-1));
-    qDebug() << "row_"+QString::number(ui->client_list_table->rowCount()-1);
+    btn->setObjectName("buttonrow_"+QString::number(this->tcpsocket->socketDescriptor()));
+    qDebug() << "buttonrow_"+QString::number(this->tcpsocket->socketDescriptor());
     ui->client_list_table->setCellWidget(0,4,btn);
-
-
+    ui->client_list_table->cellWidget(0,4)->setStyleSheet("background-color:rgb(175,0,0); color:white;");
     QObject::connect(btn,SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
-    //columns width
-    ui->client_list_table->setColumnWidth(0, ui->client_list_table->width()/5);
-    ui->client_list_table->setColumnWidth(1, ui->client_list_table->width()/5);
-    ui->client_list_table->setColumnWidth(2, ui->client_list_table->width()/5);
-    ui->client_list_table->setColumnWidth(3, ui->client_list_table->width()/5);
-    ui->client_list_table->setColumnWidth(4, ui->client_list_table->width()/5);
-    ui->client_list_table->cellWidget(0,4)->setStyleSheet("background-color:rgb(155,0,0); color:white;");
 }
 
 void Server::readSlot()
@@ -65,23 +75,89 @@ void Server::readSlot()
 
 void Server::disconnectClientSlot(bool)
 {
-    QString btn_name = qobject_cast<QWidget*>(this->sender())->objectName();
-    QStringList qsl = btn_name.split("_");
-    int row_id = qsl.last().toInt();
-    this->tcpsockets.at(row_id)->disconnectFromHost();
-    //this->tcpsockets.removeAt(row_id);
-    qDebug() << "Row count: " << ui->client_list_table->rowCount();
-    qDebug() << "Row to delete: " << (ui->client_list_table->rowCount()-1)-row_id;
-    ((QPushButton*)(ui->client_list_table->cellWidget((ui->client_list_table->rowCount()-1)-row_id, 4)))->setStyleSheet("background-color:gray;color:white;");
-    (ui->client_list_table->cellWidget((ui->client_list_table->rowCount()-1)-row_id, 4))->setEnabled(false);
-    ui->client_list_table->item((ui->client_list_table->rowCount()-1)-row_id,3)->setText("Disconnected");
-    //ui->client_list_table->removeRow((ui->client_list_table->rowCount()-1)-row_id);
+    int num_sockets = this->tcpsockets.length();
+    int socket_id_to_delete = qobject_cast<QTcpSocket*>(this->sender())->socketDescriptor();
+    foreach (QTcpSocket* socket, this->tcpsockets) {
+        if(socket->socketDescriptor() == socket_id_to_delete){
+            if(socket == this->tcpsocket){
+                this->tcpsocket = Q_NULLPTR;
+            }
+            if(this->tcpsockets.removeOne(socket)){
+                qDebug() << "Socket ID: "<< socket_id_to_delete << " successfully deleted.";
+                qDebug() << "Number of remaining sockets: " << this->tcpsockets.length();
+            }
+            else{
+                qDebug() << "Failed to remove socket ID: " << socket_id_to_delete;
+            }
+            break;
+        }
+    }
+    if(num_sockets == this->tcpsockets.length()){
+        qDebug() << "You are trying to remove non-existing socket ID: " << socket_id_to_delete;
+    }
+    // find row with the corresponding connection
+    QList<QTableWidgetItem*> items_found = ui->client_list_table->findItems(QString::number(socket_id_to_delete),Qt::MatchExactly);
+    foreach (auto wi, items_found) {
+        if(wi->column()==2){
+            wi->setText("n/a");
+            ui->client_list_table->item(ui->client_list_table->row(wi),3)->setText("Disconnected");
+            ((QPushButton*)ui->client_list_table->cellWidget(ui->client_list_table->row(wi),4))->setEnabled(false);
+            for(int i=0;i<4;i++){
+                ui->client_list_table->item(ui->client_list_table->row(wi),i)->setBackgroundColor(QColor(255,0,0,100));
+            }
+            ((QPushButton*)ui->client_list_table->cellWidget(ui->client_list_table->row(wi),4))->setStyleSheet("background-color:rgb(99,99,99);color:white;");
+        }
+    }
 }
 
 void Server::clientDisconnectedSlot()
 {
-    qDebug() << qobject_cast<QTcpSocket*>(this->sender())->socketDescriptor();
+    qDebug() << "Client disconnected";
 
+}
+
+void Server::aboutToCloseSlot()
+{
+    qDebug() << "About to close";
+}
+
+void Server::stateChangedSlot(QAbstractSocket::SocketState state)
+{
+    if(state==QAbstractSocket::ClosingState){
+        int num_sockets = this->tcpsockets.length();
+        int socket_id_to_delete = qobject_cast<QTcpSocket*>(this->sender())->socketDescriptor();
+        foreach (QTcpSocket* socket, this->tcpsockets) {
+            if(socket->socketDescriptor() == socket_id_to_delete){
+                if(socket == this->tcpsocket){
+                    this->tcpsocket = Q_NULLPTR;
+                }
+                if(this->tcpsockets.removeOne(socket)){
+                    qDebug() << "Socket ID: "<< socket_id_to_delete << " successfully deleted.";
+                    qDebug() << "Number of remaining sockets: " << this->tcpsockets.length();
+                }
+                else{
+                    qDebug() << "Failed to remove socket ID: " << socket_id_to_delete;
+                }
+                break;
+            }
+        }
+        if(num_sockets == this->tcpsockets.length()){
+            qDebug() << "You are trying to remove non-existing socket ID: " << socket_id_to_delete;
+        }
+        // find row with the corresponding connection
+        QList<QTableWidgetItem*> items_found = ui->client_list_table->findItems(QString::number(socket_id_to_delete),Qt::MatchExactly);
+        foreach (auto wi, items_found) {
+            if(wi->column()==2){
+                wi->setText("n/a");
+                ui->client_list_table->item(ui->client_list_table->row(wi),3)->setText("Disconnected");
+                ((QPushButton*)ui->client_list_table->cellWidget(ui->client_list_table->row(wi),4))->setEnabled(false);
+                for(int i=0;i<4;i++){
+                    ui->client_list_table->item(ui->client_list_table->row(wi),i)->setBackgroundColor(QColor(255,0,0,100));
+                }
+                ((QPushButton*)ui->client_list_table->cellWidget(ui->client_list_table->row(wi),4))->setStyleSheet("background-color:rgb(99,99,99);color:white;");
+            }
+        }
+    }
 }
 
 void Server::on_start_server_button_clicked()

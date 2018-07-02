@@ -24,6 +24,8 @@ public slots:
     void readSlot();
     void disconnectClientSlot(bool);
     void clientDisconnectedSlot();
+    void aboutToCloseSlot();
+    void stateChangedSlot(QAbstractSocket::SocketState);
 private slots:
     void on_start_server_button_clicked();
     void on_stop_server_button_clicked();
