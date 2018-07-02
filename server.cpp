@@ -28,6 +28,7 @@ void Server::connectionSlot()
     this->tcpsockets.push_back(this->tcpsocket);
     qDebug() << (this->tcpsockets);
     QObject::connect(this->tcpsocket, SIGNAL(readyRead()), this, SLOT(readSlot()));
+    QObject::connect(this->tcpsocket, SIGNAL(disconnected()),this, SLOT(clientDisconnectedSlot()));
     qDebug() << "Connection has arrived from remote IP " << this->tcpsocket->peerAddress().toString() << "@" << this->tcpsocket->peerPort();
     ui->client_list_table->insertRow(0);
     QTableWidgetItem * itemIP = new QTableWidgetItem(this->tcpsocket->peerAddress().toString());
@@ -75,6 +76,12 @@ void Server::disconnectClientSlot(bool)
     (ui->client_list_table->cellWidget((ui->client_list_table->rowCount()-1)-row_id, 4))->setEnabled(false);
     ui->client_list_table->item((ui->client_list_table->rowCount()-1)-row_id,3)->setText("Disconnected");
     //ui->client_list_table->removeRow((ui->client_list_table->rowCount()-1)-row_id);
+}
+
+void Server::clientDisconnectedSlot()
+{
+    qDebug() << qobject_cast<QTcpSocket*>(this->sender())->socketDescriptor();
+
 }
 
 void Server::on_start_server_button_clicked()
