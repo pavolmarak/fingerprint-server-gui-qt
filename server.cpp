@@ -39,9 +39,13 @@ void Server::connectionSlot()
     ui->client_list_table->setItem(0,1,itemPort);
     ui->client_list_table->setItem(0,2,itemSocketDescriptor);
     ui->client_list_table->setItem(0,3,itemStatus);
-    ui->client_list_table->setCellWidget(0,4,new QPushButton("Disconnect"));
+    QPushButton* btn = new QPushButton("Disconnect");
+    btn->setObjectName("row_"+QString::number(ui->client_list_table->rowCount()-1));
+    qDebug() << "row_"+QString::number(ui->client_list_table->rowCount()-1);
+    ui->client_list_table->setCellWidget(0,4,btn);
 
-    QObject::connect((QPushButton*)ui->client_list_table->cellWidget(0,4),SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
+
+    QObject::connect(btn,SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
     //columns width
     ui->client_list_table->setColumnWidth(0, ui->client_list_table->width()/5);
     ui->client_list_table->setColumnWidth(1, ui->client_list_table->width()/5);
@@ -60,16 +64,17 @@ void Server::readSlot()
 
 void Server::disconnectClientSlot(bool)
 {
-    QWidget *w = qobject_cast<QWidget *>(sender()->parent());
-    if(w){
-        int row = ui->client_list_table->indexAt(w->pos()).row();
-        qDebug() << row;
-        this->tcpsockets.at(row)->disconnectFromHost();
-        this->tcpsockets.removeAt(row);
-        ui->client_list_table->removeRow(row);
-        ui->client_list_table->setCurrentCell(0, 0);
-    }
-
+    QString btn_name = qobject_cast<QWidget*>(this->sender())->objectName();
+    QStringList qsl = btn_name.split("_");
+    int row_id = qsl.last().toInt();
+    this->tcpsockets.at(row_id)->disconnectFromHost();
+    //this->tcpsockets.removeAt(row_id);
+    qDebug() << "Row count: " << ui->client_list_table->rowCount();
+    qDebug() << "Row to delete: " << (ui->client_list_table->rowCount()-1)-row_id;
+    ((QPushButton*)(ui->client_list_table->cellWidget((ui->client_list_table->rowCount()-1)-row_id, 4)))->setStyleSheet("background-color:gray;color:white;");
+    (ui->client_list_table->cellWidget((ui->client_list_table->rowCount()-1)-row_id, 4))->setEnabled(false);
+    ui->client_list_table->item((ui->client_list_table->rowCount()-1)-row_id,3)->setText("Disconnected");
+    //ui->client_list_table->removeRow((ui->client_list_table->rowCount()-1)-row_id);
 }
 
 void Server::on_start_server_button_clicked()
