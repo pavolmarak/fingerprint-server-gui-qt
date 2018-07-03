@@ -73,12 +73,14 @@ void Server::readSlot()
     this->tcpsocket->write("Hello from server");
 }
 
+// slot function to handle manual client disconnection
 void Server::disconnectClientSlot(bool)
 {
     int num_sockets = this->tcpsockets.length();
-    int socket_id_to_delete = qobject_cast<QTcpSocket*>(this->sender())->socketDescriptor();
+    int socket_id_to_delete = qobject_cast<QPushButton*>(sender())->objectName().split("_").last().toInt();
     foreach (QTcpSocket* socket, this->tcpsockets) {
         if(socket->socketDescriptor() == socket_id_to_delete){
+            socket->disconnectFromHost();
             if(socket == this->tcpsocket){
                 this->tcpsocket = Q_NULLPTR;
             }
@@ -123,6 +125,7 @@ void Server::aboutToCloseSlot()
 
 void Server::stateChangedSlot(QAbstractSocket::SocketState state)
 {
+    qDebug() << state;
     if(state==QAbstractSocket::ClosingState){
         int num_sockets = this->tcpsockets.length();
         int socket_id_to_delete = qobject_cast<QTcpSocket*>(this->sender())->socketDescriptor();
