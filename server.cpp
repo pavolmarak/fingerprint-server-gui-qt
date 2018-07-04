@@ -115,6 +115,12 @@ void Server::disconnectClientSlot(bool)
 void Server::clientDisconnectedSlot()
 {
     qDebug() << "Client disconnected";
+    int peerPort = qobject_cast<QTcpSocket*>(sender())->peerPort();
+    for(int r=0; r < ui->client_list_table->rowCount();r++){
+        if(peerPort == ui->client_list_table->item(r,1)->text().toInt()){
+            ui->client_list_table->item(r,1)->setText("***");
+        }
+    }
 
 }
 
@@ -126,6 +132,7 @@ void Server::aboutToCloseSlot()
 void Server::stateChangedSlot(QAbstractSocket::SocketState state)
 {
     qDebug() << state;
+    //qDebug() << "Socket ID: " << qobject_cast<QTcpSocket*>(sender())->socketDescriptor();
     if(state==QAbstractSocket::ClosingState){
         int num_sockets = this->tcpsockets.length();
         int socket_id_to_delete = qobject_cast<QTcpSocket*>(this->sender())->socketDescriptor();
