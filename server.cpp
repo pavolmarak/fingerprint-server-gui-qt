@@ -20,6 +20,7 @@ Server::Server(QWidget *parent) :
 
 Server::~Server()
 {
+    qDebug() << "DESTRUCTOR: Number of active TCP sockets is " << this->tcpsockets.length();
     if(this->server.isListening()){
         this->server.close();
         qDebug() << "Server is stopped.";
@@ -42,11 +43,11 @@ void Server::connectionSlot()
     QObject::connect(this->tcpsocket, SIGNAL(disconnected()),this, SLOT(clientDisconnectedSlot()));
     QObject::connect(this->tcpsocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)),this, SLOT(stateChangedSlot(QAbstractSocket::SocketState)));
 
-    qDebug() << "Connection has arrived from remote IP "
+    qDebug() << "[NEW CLIENT] Connection has arrived from remote IP "
              << this->tcpsocket->peerAddress().toString()
              << "@"
              << this->tcpsocket->peerPort()
-             << "... buttonrow_" + QString::number(this->tcpsocket->socketDescriptor());
+             << "buttonrow_"+ this->tcpsocket->peerAddress().toString() + "_" + QString::number(this->tcpsocket->peerPort()) + "_" + QString::number(this->tcpsocket->socketDescriptor());
 
 
     // creating a new table row for the new connection
@@ -63,7 +64,8 @@ void Server::connectionSlot()
 
     // creating Disconnect button for each connection
     QPushButton* btn = new QPushButton("Disconnect");
-    btn->setObjectName("buttonrow_"+QString::number(this->tcpsocket->socketDescriptor()));
+    // button name is formed as button + ip + port + socket_id
+    btn->setObjectName("buttonrow_"+ this->tcpsocket->peerAddress().toString() + "_" + QString::number(this->tcpsocket->peerPort()) + "_" + QString::number(this->tcpsocket->socketDescriptor()));
     ui->client_list_table->setCellWidget(0,4,btn);
     ui->client_list_table->cellWidget(0,4)->setStyleSheet("background-color:rgb(175,0,0); color:white;");
     QObject::connect(btn,SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
@@ -76,41 +78,42 @@ void Server::readSlot()
     this->tcpsocket->write("Hello from server");
 }
 
-// slot function to handle manual client disconnection
+// slot function to handle manual client disconnection initiated by server
 void Server::disconnectClientSlot(bool)
 {
     int num_sockets = this->tcpsockets.length();
-    int socket_id_to_delete = qobject_cast<QPushButton*>(sender())->objectName().split("_").last().toInt();
+    QString ip_to_delete = qobject_cast<QPushButton*>(sender())->objectName().split("_").at(1);
+    int port_to_delete = qobject_cast<QPushButton*>(sender())->objectName().split("_").at(2).toInt();
+    int socket_id_to_delete = qobject_cast<QPushButton*>(sender())->objectName().split("_").at(3).toInt();
     foreach (QTcpSocket* socket, this->tcpsockets) {
-        if(socket->socketDescriptor() == socket_id_to_delete){
+        if((socket->socketDescriptor() == socket_id_to_delete) && (socket->peerPort() == port_to_delete) && (socket->peerAddress().toString() == ip_to_delete)){
             socket->disconnectFromHost();
             if(socket == this->tcpsocket){
                 this->tcpsocket = Q_NULLPTR;
+                if(!this->tcpsockets.isEmpty()){
+                    this->tcpsocket = this->tcpsockets.last();
+                }
             }
             if(this->tcpsockets.removeOne(socket)){
-                qDebug() << "Socket ID: "<< socket_id_to_delete << " successfully deleted.";
+                qDebug() << "Socket ID: "<< socket_id_to_delete << " from IP: " << ip_to_delete << ":" << port_to_delete << " successfully deleted.";
                 qDebug() << "Number of remaining sockets: " << this->tcpsockets.length();
             }
             else{
-                qDebug() << "Failed to remove socket ID: " << socket_id_to_delete;
+                qDebug() << "Failed to remove socket ID: " << socket_id_to_delete << " from IP: " << ip_to_delete << ":" << port_to_delete;
             }
             break;
         }
     }
     if(num_sockets == this->tcpsockets.length()){
-        qDebug() << "You are trying to remove non-existing socket ID: " << socket_id_to_delete;
+        qDebug() << "You are trying to remove non-existing socket with ID: " << socket_id_to_delete << " and port: " << port_to_delete;
     }
     // find row with the corresponding connection
-    QList<QTableWidgetItem*> items_found = ui->client_list_table->findItems(QString::number(socket_id_to_delete),Qt::MatchExactly);
+    QList<QTableWidgetItem*> items_found = ui->client_list_table->findItems(QString::number(port_to_delete),Qt::MatchExactly);
+    // for all items in the table that contains the given port name
     foreach (auto wi, items_found) {
-        if(wi->column()==2){
-            wi->setText("n/a");
-            ui->client_list_table->item(ui->client_list_table->row(wi),3)->setText("Disconnected");
-            ((QPushButton*)ui->client_list_table->cellWidget(ui->client_list_table->row(wi),4))->setEnabled(false);
-            for(int i=0;i<4;i++){
-                ui->client_list_table->item(ui->client_list_table->row(wi),i)->setBackgroundColor(QColor(255,0,0,100));
-            }
-            ((QPushButton*)ui->client_list_table->cellWidget(ui->client_list_table->row(wi),4))->setStyleSheet("background-color:rgb(99,99,99);color:white;");
+        // if we found port name in column no. 1 and the corresponding row also contains the given IP and socket descriptor
+        if((wi->column()==1) && (ui->client_list_table->item(wi->row(),2)->text().toInt()==socket_id_to_delete) && (ui->client_list_table->item(wi->row(),0)->text()==ip_to_delete)){
+            ui->client_list_table->removeRow(wi->row());
         }
     }
 }
@@ -120,13 +123,40 @@ void Server::disconnectClientSlot(bool)
 void Server::clientDisconnectedSlot()
 {
     qDebug() << "Client disconnected";
-    int peerPort = qobject_cast<QTcpSocket*>(sender())->peerPort();
-    for(int r=0; r < ui->client_list_table->rowCount();r++){
-        if(peerPort == ui->client_list_table->item(r,1)->text().toInt()){
-            ui->client_list_table->item(r,1)->setText("***");
+
+    int num_sockets = this->tcpsockets.length();
+    QString ip_to_delete = qobject_cast<QTcpSocket*>(sender())->peerAddress().toString();
+    int port_to_delete = qobject_cast<QTcpSocket*>(sender())->peerPort();
+    foreach (QTcpSocket* socket, this->tcpsockets) {
+        if((socket->peerPort() == port_to_delete) && (socket->peerAddress().toString() == ip_to_delete)){
+            if(socket == this->tcpsocket){
+                this->tcpsocket = Q_NULLPTR;
+                if(!this->tcpsockets.isEmpty()){
+                    this->tcpsocket = this->tcpsockets.last();
+                }
+            }
+            if(this->tcpsockets.removeOne(socket)){
+                qDebug() << "Socket from IP: " << ip_to_delete << ":" << port_to_delete << " successfully deleted.";
+                qDebug() << "Number of remaining sockets: " << this->tcpsockets.length();
+            }
+            else{
+                qDebug() << "Failed to remove socket from IP: " << ip_to_delete << ":" << port_to_delete;
+            }
+            break;
         }
     }
-
+    if(num_sockets == this->tcpsockets.length()){
+        qDebug() << "You are trying to remove non-existing socket from: " << ip_to_delete << ":" << port_to_delete;
+    }
+    // find row with the corresponding connection
+    QList<QTableWidgetItem*> items_found = ui->client_list_table->findItems(QString::number(port_to_delete),Qt::MatchExactly);
+    // for all items in the table that contains the given port name
+    foreach (auto wi, items_found) {
+        // if we found port name in column no. 1 and the corresponding row also contains the given IP
+        if((wi->column()==1) && (ui->client_list_table->item(wi->row(),0)->text()==ip_to_delete)){
+            ui->client_list_table->removeRow(wi->row());
+        }
+    }
 }
 
 // function to handle different socket states
