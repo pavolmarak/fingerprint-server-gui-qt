@@ -40,9 +40,13 @@ void Server::connectionSlot()
     // connecting socket signal to their handling slots
     QObject::connect(this->tcpsocket, SIGNAL(readyRead()), this, SLOT(readSlot()));
     QObject::connect(this->tcpsocket, SIGNAL(disconnected()),this, SLOT(clientDisconnectedSlot()));
-    QObject::connect(this->tcpsocket, SIGNAL(aboutToClose()),this, SLOT(aboutToCloseSlot()));    QObject::connect(this->tcpsocket, SIGNAL(aboutToClose()),this, SLOT(aboutToCloseSlot()));
     QObject::connect(this->tcpsocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)),this, SLOT(stateChangedSlot(QAbstractSocket::SocketState)));
-    qDebug() << "Connection has arrived from remote IP " << this->tcpsocket->peerAddress().toString() << "@" << this->tcpsocket->peerPort();
+
+    qDebug() << "Connection has arrived from remote IP "
+             << this->tcpsocket->peerAddress().toString()
+             << "@"
+             << this->tcpsocket->peerPort()
+             << "... buttonrow_" + QString::number(this->tcpsocket->socketDescriptor());
 
 
     // creating a new table row for the new connection
@@ -60,7 +64,6 @@ void Server::connectionSlot()
     // creating Disconnect button for each connection
     QPushButton* btn = new QPushButton("Disconnect");
     btn->setObjectName("buttonrow_"+QString::number(this->tcpsocket->socketDescriptor()));
-    qDebug() << "buttonrow_"+QString::number(this->tcpsocket->socketDescriptor());
     ui->client_list_table->setCellWidget(0,4,btn);
     ui->client_list_table->cellWidget(0,4)->setStyleSheet("background-color:rgb(175,0,0); color:white;");
     QObject::connect(btn,SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
@@ -112,6 +115,8 @@ void Server::disconnectClientSlot(bool)
     }
 }
 
+
+// function to handle situations when sockets are closed from outside
 void Server::clientDisconnectedSlot()
 {
     qDebug() << "Client disconnected";
@@ -124,55 +129,17 @@ void Server::clientDisconnectedSlot()
 
 }
 
-void Server::aboutToCloseSlot()
-{
-    qDebug() << "About to close";
-}
-
+// function to handle different socket states
 void Server::stateChangedSlot(QAbstractSocket::SocketState state)
 {
-    qDebug() << state;
-    //qDebug() << "Socket ID: " << qobject_cast<QTcpSocket*>(sender())->socketDescriptor();
-    if(state==QAbstractSocket::ClosingState){
-        int num_sockets = this->tcpsockets.length();
-        int socket_id_to_delete = qobject_cast<QTcpSocket*>(this->sender())->socketDescriptor();
-        foreach (QTcpSocket* socket, this->tcpsockets) {
-            if(socket->socketDescriptor() == socket_id_to_delete){
-                if(socket == this->tcpsocket){
-                    this->tcpsocket = Q_NULLPTR;
-                }
-                if(this->tcpsockets.removeOne(socket)){
-                    qDebug() << "Socket ID: "<< socket_id_to_delete << " successfully deleted.";
-                    qDebug() << "Number of remaining sockets: " << this->tcpsockets.length();
-                }
-                else{
-                    qDebug() << "Failed to remove socket ID: " << socket_id_to_delete;
-                }
-                break;
-            }
-        }
-        if(num_sockets == this->tcpsockets.length()){
-            qDebug() << "You are trying to remove non-existing socket ID: " << socket_id_to_delete;
-        }
-        // find row with the corresponding connection
-        QList<QTableWidgetItem*> items_found = ui->client_list_table->findItems(QString::number(socket_id_to_delete),Qt::MatchExactly);
-        foreach (auto wi, items_found) {
-            if(wi->column()==2){
-                wi->setText("n/a");
-                ui->client_list_table->item(ui->client_list_table->row(wi),3)->setText("Disconnected");
-                ((QPushButton*)ui->client_list_table->cellWidget(ui->client_list_table->row(wi),4))->setEnabled(false);
-                for(int i=0;i<4;i++){
-                    ui->client_list_table->item(ui->client_list_table->row(wi),i)->setBackgroundColor(QColor(255,0,0,100));
-                }
-                ((QPushButton*)ui->client_list_table->cellWidget(ui->client_list_table->row(wi),4))->setStyleSheet("background-color:rgb(99,99,99);color:white;");
-            }
-        }
-    }
+
 }
 
+// function to the start server and make it listen on predefined port for new connections
 void Server::on_start_server_button_clicked()
 {
-    this->server.listen(QHostAddress(ui->server_ip->text()),ui->server_port->text().toUInt());
+    bool ret = this->server.listen(QHostAddress(ui->server_ip->text()),ui->server_port->text().toUInt());
+    ret ? qDebug() << "Server was started sucessfully." : qDebug() << "Server failed to start.";
     if(this->server.isListening()){
         qDebug() << "Server is listening ...";
         ui->statusBar->showMessage("Server is listening ...");
@@ -184,6 +151,7 @@ void Server::on_start_server_button_clicked()
     }
 }
 
+// function to stop the server but all established connections remain intact
 void Server::on_stop_server_button_clicked()
 {
     if(this->server.isListening()){
