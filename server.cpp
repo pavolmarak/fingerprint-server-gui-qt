@@ -74,8 +74,14 @@ void Server::connectionSlot()
 void Server::readSlot()
 {
     QByteArray message = this->tcpsocket->readAll();
-    qDebug() << "Message from client: " << message;
+    qDebug() << message.size();
+    //qDebug() << "Message from client: " << message;
     this->tcpsocket->write("Hello from server");
+    // naive detection of image
+    if(message.size()> 100){
+        QImage fing_img((unsigned char*)message.data(),320,480,QImage::Format_Grayscale8);
+        ui->img_box->setPixmap(QPixmap::fromImage(fing_img));
+    }
 }
 
 // slot function to handle manual client disconnection initiated by server
