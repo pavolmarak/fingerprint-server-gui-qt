@@ -7,6 +7,7 @@
 #include <QTcpSocket>
 #include <QDebug>
 #include <QFileDialog>
+#include <QDateTime>
 
 #define IMG_SIZE 153600
 #define IMG_WIDTH 320

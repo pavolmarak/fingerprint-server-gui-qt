@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1187</width>
-    <height>603</height>
+    <height>643</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -246,6 +246,13 @@
              <height>480</height>
             </size>
            </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="image_from">
            <property name="text">
             <string/>
            </property>
