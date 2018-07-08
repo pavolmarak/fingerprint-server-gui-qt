@@ -73,14 +73,23 @@ void Server::connectionSlot()
 
 void Server::readSlot()
 {
-    QByteArray message = this->tcpsocket->readAll();
-    qDebug() << message.size();
-    //qDebug() << "Message from client: " << message;
-    this->tcpsocket->write("Hello from server");
-    // naive detection of image
-    if(message.size()> 100){
-        QImage fing_img((unsigned char*)message.data(),320,480,QImage::Format_Grayscale8);
+    QByteArray rcvData = qobject_cast<QTcpSocket*>(sender())->readAll();
+    this->img.append(rcvData);
+    qDebug() << rcvData.size() << " B reveived.";
+    if(this->img.size() == IMG_SIZE){
+        qDebug() << "Whole image transferred.";
+        for(int i=0;i<ui->client_list_table->rowCount();i++){
+            if((ui->client_list_table->item(i,0)->text() == qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString()) && (ui->client_list_table->item(i,1)->text().toInt() == qobject_cast<QTcpSocket*>(this->sender())->peerPort()))
+            {
+                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::green));
+            }
+            else{
+                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::transparent));
+            }
+        }
+        QImage fing_img((unsigned char*)this->img.data(),IMG_WIDTH,IMG_HEIGHT,QImage::Format_Grayscale8);
         ui->img_box->setPixmap(QPixmap::fromImage(fing_img));
+        this->img.clear();
     }
 }
 
@@ -196,4 +205,9 @@ void Server::on_stop_server_button_clicked()
         qDebug() << "Server is stopped.";
         ui->statusBar->showMessage("Server is stopped.");
     }
+}
+
+void Server::on_save_image_button_clicked()
+{
+    ui->img_box->grab().save(QFileDialog::getSaveFileName(nullptr,"Save image as"));
 }
