@@ -41,6 +41,7 @@ public slots:
     void stateChangedSlot(QAbstractSocket::SocketState);
     void preprocessingDoneSlot(PREPROCESSING_RESULTS results);
     void extractionDoneSlot(EXTRACTION_RESULTS results);
+    void verificationDoneSlot(bool success);
 private slots:
     void on_start_server_button_clicked();
     void on_stop_server_button_clicked();
@@ -57,6 +58,7 @@ private:
     QByteArray img;
     Preprocessing p;
     Extraction e;
+    Matcher m;
     QImage originalImage, skeletonImage;
     unsigned char* lastImageData;
 };

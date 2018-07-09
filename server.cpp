@@ -12,6 +12,7 @@ Server::Server(QWidget *parent) :
     QObject::connect(&(this->server), SIGNAL(newConnection()), this, SLOT(connectionSlot()));
     QObject::connect(&(this->p),SIGNAL(preprocessingDoneSignal(PREPROCESSING_RESULTS)), this, SLOT(preprocessingDoneSlot(PREPROCESSING_RESULTS)));
     QObject::connect(&(this->e),SIGNAL(extractionDoneSignal(EXTRACTION_RESULTS)), this, SLOT(extractionDoneSlot(EXTRACTION_RESULTS)));
+    QObject::connect(&(this->m),SIGNAL(verificationDoneSignal(bool)), this, SLOT(verificationDoneSlot(bool)));
 
     // client list setup
     ui->client_list_table->setColumnCount(5);
@@ -225,6 +226,16 @@ void Server::extractionDoneSlot(EXTRACTION_RESULTS results)
         painter.drawEllipse(m.xy,3,3);
     }
     ui->img_box->setPixmap(QPixmap::fromImage(tmp));
+    QVector<QVector<MINUTIA>> contra;
+    contra.push_back(results.minutiaePredictedFixed);
+    qDebug() << "Minutiae count: " << results.minutiaePredictedFixed.length();
+    qDebug() << "Minutiae count: " << contra[0].length();
+    this->m.verify(results.minutiaePredictedFixed,contra);
+}
+
+void Server::verificationDoneSlot(bool success)
+{
+    qDebug() << "VERIF DONE:" << success;
 }
 
 // function to the start server and make it listen on predefined port for new connections
