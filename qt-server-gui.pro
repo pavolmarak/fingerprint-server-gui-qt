@@ -32,3 +32,39 @@ HEADERS += \
 
 FORMS += \
         server.ui
+
+# DBOX Preprocessing module
+unix:!macx: LIBS += -L$$PWD/../Preprocessing/ -lPreprocessing
+INCLUDEPATH += $$PWD/../Preprocessing
+DEPENDPATH += $$PWD/../Preprocessing
+
+# DBOX Extraction module
+unix:!macx: LIBS += -L$$PWD/../Extraction/ -lExtraction
+INCLUDEPATH += $$PWD/../Extraction
+DEPENDPATH += $$PWD/../Extraction
+
+# DBOX Matcher module
+unix:!macx: LIBS += -L$$PWD/../Matcher/ -lMatcher
+INCLUDEPATH += $$PWD/../Matcher
+DEPENDPATH += $$PWD/../Matcher
+
+# CUDA
+unix:!macx: LIBS += -L/opt/cuda/lib64/ -lcudart
+INCLUDEPATH += /opt/cuda/include
+DEPENDPATH += /opt/cuda/include
+
+# Suprema BioMini Slim
+unix:!macx: LIBS += -L/usr/local/lib/ -lUFMatcher
+INCLUDEPATH += /usr/local/include/suprema
+
+# OpenCV
+unix:!macx: LIBS += -L/usr/local/lib64/ -lopencv_world
+
+# ArrayFire
+unix:!macx: LIBS += -L/usr/lib/ -lafcuda
+
+# Caffe 1.0
+unix:!macx: LIBS += -L/usr/local/lib64/ -lcaffe
+unix:!macx: LIBS += -L/usr/lib/ -lboost_system
+unix:!macx: LIBS += -L/usr/lib/ -lglog
+unix:!macx: LIBS += -L/usr/lib/ -lprotobuf

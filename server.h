@@ -9,6 +9,14 @@
 #include <QFileDialog>
 #include <QDateTime>
 
+// DBOX modules
+#include "preprocessing.h"
+#include "extraction.h"
+#include "matcher.h"
+
+// OpenCV
+#include "opencv2/world.hpp"
+
 #define IMG_SIZE 153600
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 480
@@ -31,6 +39,8 @@ public slots:
     void disconnectClientSlot(bool);
     void clientDisconnectedSlot();
     void stateChangedSlot(QAbstractSocket::SocketState);
+    void preprocessingDoneSlot(PREPROCESSING_RESULTS results);
+    void extractionDoneSlot(EXTRACTION_RESULTS results);
 private slots:
     void on_start_server_button_clicked();
     void on_stop_server_button_clicked();
@@ -43,6 +53,8 @@ private:
     QTcpSocket* tcpsocket;
     QList<QTcpSocket*> tcpsockets;
     QByteArray img;
+    Preprocessing p;
+    Extraction e;
 };
 
 #endif // SERVER_H

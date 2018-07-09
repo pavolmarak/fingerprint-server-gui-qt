@@ -6,7 +6,12 @@ Server::Server(QWidget *parent) :
     ui(new Ui::Server)
 {
     ui->setupUi(this);
+    qRegisterMetaType<PREPROCESSING_RESULTS >("PREPROCESSING_RESULTS");
+    qRegisterMetaType<EXTRACTION_RESULTS >("EXTRACTION_RESULTS");
     QObject::connect(&(this->server), SIGNAL(newConnection()), this, SLOT(connectionSlot()));
+    QObject::connect(&(this->p),SIGNAL(preprocessingDoneSignal(PREPROCESSING_RESULTS)), this, SLOT(preprocessingDoneSlot(PREPROCESSING_RESULTS)));
+    QObject::connect(&(this->e),SIGNAL(extractionDoneSignal(EXTRACTION_RESULTS)), this, SLOT(extractionDoneSlot(EXTRACTION_RESULTS)));
+
     // client list setup
     ui->client_list_table->setColumnCount(5);
     ui->client_list_table->setHorizontalHeaderLabels(QStringList() << "IP" << "Port" << "Socket ID" << "Status" << "Action");
@@ -78,6 +83,9 @@ void Server::readSlot()
     qDebug() << rcvData.size() << " B reveived.";
     if(this->img.size() == IMG_SIZE){
         qDebug() << "Whole image transferred.";
+        cv::Mat cv_img(IMG_HEIGHT, IMG_WIDTH, CV_8UC1,(unsigned char*)this->img.data());
+        p.loadInput(cv_img);
+        p.start();
         for(int i=0;i<ui->client_list_table->rowCount();i++){
             if((ui->client_list_table->item(i,0)->text() == qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString()) && (ui->client_list_table->item(i,1)->text().toInt() == qobject_cast<QTcpSocket*>(this->sender())->peerPort()))
             {
@@ -179,6 +187,40 @@ void Server::clientDisconnectedSlot()
 void Server::stateChangedSlot(QAbstractSocket::SocketState state)
 {
 
+}
+
+void Server::preprocessingDoneSlot(PREPROCESSING_RESULTS results)
+{
+    qDebug() << "Preprocessing done.";
+    //cv::imshow("Skeleton", results.imgSkeleton);
+    //QImage skeleton(results.imgSkeleton.data, results.imgSkeleton.cols, results.imgSkeleton.rows, QImage::Format_Grayscale8);
+    //ui->img_box->setPixmap(QPixmap::fromImage(skeleton));
+    this->e.loadInput(results);
+    this->e.start();
+}
+
+void Server::extractionDoneSlot(EXTRACTION_RESULTS results)
+{
+    qDebug() << "Extraction done.";
+    QImage tmp = (ui->img_box->grab().toImage());
+    QPainter painter(&tmp);
+    QPen redpen;
+    QPen bluepen;
+    redpen.setWidth(1);
+    bluepen.setWidth(1);
+    redpen.setColor(QColor(255,0,0,255));
+    bluepen.setColor(QColor(0,0,255,255));
+
+    foreach (MINUTIA m, results.minutiaePredictedFixed) {
+        if(m.type == 0){
+            painter.setPen(redpen);
+        }
+        else{
+            painter.setPen(bluepen);
+        }
+        painter.drawEllipse(m.xy,3,3);
+    }
+    ui->img_box->setPixmap(QPixmap::fromImage(tmp));
 }
 
 // function to the start server and make it listen on predefined port for new connections
