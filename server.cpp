@@ -6,6 +6,7 @@ Server::Server(QWidget *parent) :
     ui(new Ui::Server)
 {
     ui->setupUi(this);
+    this->lastImageData = nullptr;
     qRegisterMetaType<PREPROCESSING_RESULTS >("PREPROCESSING_RESULTS");
     qRegisterMetaType<EXTRACTION_RESULTS >("EXTRACTION_RESULTS");
     QObject::connect(&(this->server), SIGNAL(newConnection()), this, SLOT(connectionSlot()));
@@ -96,8 +97,10 @@ void Server::readSlot()
                 ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::transparent));
             }
         }
-        QImage fing_img((unsigned char*)this->img.data(),IMG_WIDTH,IMG_HEIGHT,QImage::Format_Grayscale8);
-        ui->img_box->setPixmap(QPixmap::fromImage(fing_img));
+        this->lastImageData = (unsigned char*)calloc(this->img.size(),sizeof(unsigned char));
+        memcpy(this->lastImageData,(unsigned char*)this->img.data(),this->img.size());
+        this->originalImage = QImage(this->lastImageData,IMG_WIDTH,IMG_HEIGHT,QImage::Format_Grayscale8);
+        ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
         this->img.clear();
     }
 }
@@ -192,6 +195,7 @@ void Server::stateChangedSlot(QAbstractSocket::SocketState state)
 void Server::preprocessingDoneSlot(PREPROCESSING_RESULTS results)
 {
     qDebug() << "Preprocessing done.";
+    this->skeletonImage = QImage(results.imgSkeleton.data,results.imgSkeleton.cols,results.imgSkeleton.rows,QImage::Format_Grayscale8);
     //cv::imshow("Skeleton", results.imgSkeleton);
     //QImage skeleton(results.imgSkeleton.data, results.imgSkeleton.cols, results.imgSkeleton.rows, QImage::Format_Grayscale8);
     //ui->img_box->setPixmap(QPixmap::fromImage(skeleton));
@@ -253,4 +257,14 @@ void Server::on_stop_server_button_clicked()
 void Server::on_save_image_button_clicked()
 {
     ui->img_box->grab().save(QFileDialog::getSaveFileName(nullptr,"Save image as"));
+}
+
+void Server::on_output_combo_activated(const QString &arg1)
+{
+    if(arg1 == "Original image"){
+        ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
+    }
+    else if(arg1 == "Skeleton"){
+        ui->img_box->setPixmap(QPixmap::fromImage(this->skeletonImage));
+    }
 }

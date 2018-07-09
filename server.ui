@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1187</width>
-    <height>643</height>
+    <height>667</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -256,6 +256,35 @@
            <property name="text">
             <string/>
            </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="output_combo">
+           <item>
+            <property name="text">
+             <string>Original image</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Enhanced image</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Orientation map</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Skeleton</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Extracted features</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item>

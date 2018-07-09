@@ -47,6 +47,8 @@ private slots:
 
     void on_save_image_button_clicked();
 
+    void on_output_combo_activated(const QString &arg1);
+
 private:
     Ui::Server *ui;
     QTcpServer server;
@@ -55,6 +57,8 @@ private:
     QByteArray img;
     Preprocessing p;
     Extraction e;
+    QImage originalImage, skeletonImage;
+    unsigned char* lastImageData;
 };
 
 #endif // SERVER_H
