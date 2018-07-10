@@ -230,7 +230,7 @@ void Server::extractionDoneSlot(EXTRACTION_RESULTS results)
     contra.push_back(results.minutiaePredictedFixed);
     qDebug() << "Minutiae count: " << results.minutiaePredictedFixed.length();
     qDebug() << "Minutiae count: " << contra[0].length();
-    this->m.verify(results.minutiaePredictedFixed,contra);
+    //this->m.verify(results.minutiaePredictedFixed,contra);
 }
 
 void Server::verificationDoneSlot(bool success)
