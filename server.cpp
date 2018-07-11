@@ -226,11 +226,18 @@ void Server::extractionDoneSlot(EXTRACTION_RESULTS results)
         painter.drawEllipse(m.xy,3,3);
     }
     ui->img_box->setPixmap(QPixmap::fromImage(tmp));
-    QVector<QVector<MINUTIA>> contra;
-    contra.push_back(results.minutiaePredictedFixed);
-    qDebug() << "Minutiae count: " << results.minutiaePredictedFixed.length();
-    qDebug() << "Minutiae count: " << contra[0].length();
-    //this->m.verify(results.minutiaePredictedFixed,contra);
+    this->fingerprints.push_back(results.minutiaePredictedFixed);
+    if(this->fingerprints.size()==2){
+        MATCHER matcher = suprema;
+        this->m.setMatcher(matcher);
+        QVector<QVector<MINUTIA>> tmp_v;
+        tmp_v.push_back(this->fingerprints[1]);
+        qDebug() << this->fingerprints.size() << this->fingerprints[0].size() << " vs. " << tmp_v[0].size();
+        this->m.verify(this->fingerprints[0],tmp_v);
+        this->fingerprints.clear();
+    }
+
+
 }
 
 void Server::verificationDoneSlot(bool success)
@@ -278,4 +285,9 @@ void Server::on_output_combo_activated(const QString &arg1)
     else if(arg1 == "Skeleton"){
         ui->img_box->setPixmap(QPixmap::fromImage(this->skeletonImage));
     }
+}
+
+void Server::on_save_image_button2_clicked()
+{
+    ui->img_box2->grab().save(QFileDialog::getSaveFileName(nullptr,"Save image as"));
 }

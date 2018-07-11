@@ -50,6 +50,8 @@ private slots:
 
     void on_output_combo_activated(const QString &arg1);
 
+    void on_save_image_button2_clicked();
+
 private:
     Ui::Server *ui;
     QTcpServer server;
@@ -61,6 +63,7 @@ private:
     Matcher m;
     QImage originalImage, skeletonImage;
     unsigned char* lastImageData;
+    QVector<QVector<MINUTIA>> fingerprints;
 };
 
 #endif // SERVER_H
