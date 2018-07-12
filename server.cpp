@@ -20,11 +20,11 @@ Server::Server(QWidget *parent) :
     ui->client_list_table->setColumnCount(5);
     ui->client_list_table->setHorizontalHeaderLabels(QStringList() << "IP" << "Port" << "Socket ID" << "Status" << "Action");
     //columns width
-    ui->client_list_table->setColumnWidth(0, ui->client_list_table->width()/5);
-    ui->client_list_table->setColumnWidth(1, ui->client_list_table->width()/5);
-    ui->client_list_table->setColumnWidth(2, ui->client_list_table->width()/5);
-    ui->client_list_table->setColumnWidth(3, ui->client_list_table->width()/5);
-    ui->client_list_table->setColumnWidth(4, ui->client_list_table->width()/5);
+    ui->client_list_table->setColumnWidth(0, ui->client_list_table->width()/6);
+    ui->client_list_table->setColumnWidth(1, ui->client_list_table->width()/6);
+    ui->client_list_table->setColumnWidth(2, ui->client_list_table->width()/6);
+    ui->client_list_table->setColumnWidth(3, ui->client_list_table->width()/6);
+    ui->client_list_table->setColumnWidth(4, ui->client_list_table->width()/6);
 }
 
 Server::~Server()
@@ -76,7 +76,7 @@ void Server::connectionSlot()
     // button name is formed as button + ip + port + socket_id
     btn->setObjectName("buttonrow_"+ this->tcpsocket->peerAddress().toString() + "_" + QString::number(this->tcpsocket->peerPort()) + "_" + QString::number(this->tcpsocket->socketDescriptor()));
     ui->client_list_table->setCellWidget(0,4,btn);
-    ui->client_list_table->cellWidget(0,4)->setStyleSheet("background-color:rgb(175,0,0); color:white;");
+    ui->client_list_table->cellWidget(0,4)->setStyleSheet("background-color:rgb(120,120,120); color:white; font-weight:bold;");
     QObject::connect(btn,SIGNAL(clicked(bool)), this, SLOT(disconnectClientSlot(bool)));
 }
 
@@ -122,7 +122,8 @@ void Server::readSlot()
         for(int i=0;i<ui->client_list_table->rowCount();i++){
             if((ui->client_list_table->item(i,0)->text() == qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString()) && (ui->client_list_table->item(i,1)->text().toInt() == qobject_cast<QTcpSocket*>(this->sender())->peerPort()))
             {
-                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::green));
+                ui->client_list_table->item(i,3)->setBackgroundColor(QColor("#4286f4"));
+                ui->client_list_table->item(i,3)->setTextColor(QColor("#ffffff"));
                 ui->image_from->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
             }
             else{

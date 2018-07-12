@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QDateTime>
+#include <QTableWidget>
 
 // DBOX modules
 #include "preprocessing.h"
