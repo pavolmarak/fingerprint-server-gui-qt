@@ -328,3 +328,8 @@ void Server::on_comboBox_activated(const QString &arg1)
 {
     ui->server_ip->setText(arg1);
 }
+
+void Server::on_save_conn_help_clicked()
+{
+    QMessageBox::about(this,"Help", "<b>Help</b> goes <a href='www.google.com'>here</a>.<br>Sample list:<ul><li>First</li><li>Second</li></ul>");
+}

@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QDateTime>
 #include <QTableWidget>
+#include <QMessageBox>
 
 // DBOX modules
 #include "preprocessing.h"
@@ -55,6 +56,8 @@ private slots:
     void on_save_image_button2_clicked();
 
     void on_comboBox_activated(const QString &arg1);
+
+    void on_save_conn_help_clicked();
 
 private:
     Ui::Server *ui;
