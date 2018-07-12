@@ -103,36 +103,37 @@ void Server::readSlot()
         d1 >> bc;
         this->bc_class = bc;
         d2 >> widthImg;
+        this->img_w = widthImg;
         d3 >> heightImg;
+        this->img_h = heightImg;
         qDebug() << "Hlavicka prijata:\n" << "Pocet bajtov: " << bc << "\nSirka: " << widthImg << "\nVyska: " << heightImg;
     }
 
     if(this->img.size() == this->bc_class){
         this->fragmentCounter = 0;
         this->bc_class =0;
+        qDebug() << "Whole image transferred.";
+        cv::Mat cv_img(this->img_h, this->img_w, CV_8UC1,(unsigned char*)this->img.data());
+        p.setCPUOnly(true,QThread::idealThreadCount());
+        qDebug() << "Using " << QThread::idealThreadCount() << "worker threads.";
+        p.loadInput(cv_img);
+        p.start();
+        for(int i=0;i<ui->client_list_table->rowCount();i++){
+            if((ui->client_list_table->item(i,0)->text() == qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString()) && (ui->client_list_table->item(i,1)->text().toInt() == qobject_cast<QTcpSocket*>(this->sender())->peerPort()))
+            {
+                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::green));
+                ui->image_from->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
+            }
+            else{
+                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::transparent));
+            }
+        }
+        this->lastImageData = (unsigned char*)calloc(this->img.size(),sizeof(unsigned char));
+        memcpy(this->lastImageData,(unsigned char*)this->img.data(),this->img.size());
+        this->originalImage = QImage(this->lastImageData,IMG_WIDTH,IMG_HEIGHT,QImage::Format_Grayscale8);
+        ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
         this->img.clear();
     }
-//    if(this->img.size() == SUPREMA_IMG_SIZE){
-//        qDebug() << "Whole image transferred.";
-//        cv::Mat cv_img(IMG_HEIGHT, IMG_WIDTH, CV_8UC1,(unsigned char*)this->img.data());
-//         //p.loadInput(cv_img);
-//        // p.start();
-//        for(int i=0;i<ui->client_list_table->rowCount();i++){
-//            if((ui->client_list_table->item(i,0)->text() == qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString()) && (ui->client_list_table->item(i,1)->text().toInt() == qobject_cast<QTcpSocket*>(this->sender())->peerPort()))
-//            {
-//                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::green));
-//                ui->image_from->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
-//            }
-//            else{
-//                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::transparent));
-//            }
-//        }
-//        this->lastImageData = (unsigned char*)calloc(this->img.size(),sizeof(unsigned char));
-//        memcpy(this->lastImageData,(unsigned char*)this->img.data(),this->img.size());
-//        this->originalImage = QImage(this->lastImageData,IMG_WIDTH,IMG_HEIGHT,QImage::Format_Grayscale8);
-//        ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
-//        this->img.clear();
-//    }
 }
 
 // slot function to handle manual client disconnection initiated by server
@@ -226,9 +227,10 @@ void Server::preprocessingDoneSlot(PREPROCESSING_RESULTS results)
 {
     qDebug() << "Preprocessing done.";
     this->skeletonImage = QImage(results.imgSkeleton.data,results.imgSkeleton.cols,results.imgSkeleton.rows,QImage::Format_Grayscale8);
-    //cv::imshow("Skeleton", results.imgSkeleton);
-    //QImage skeleton(results.imgSkeleton.data, results.imgSkeleton.cols, results.imgSkeleton.rows, QImage::Format_Grayscale8);
-    //ui->img_box->setPixmap(QPixmap::fromImage(skeleton));
+    cv::imshow("Skeleton", results.imgSkeleton);
+    QImage skeleton(results.imgSkeleton.data, results.imgSkeleton.cols, results.imgSkeleton.rows, QImage::Format_Grayscale8);
+    ui->img_box->setPixmap(QPixmap::fromImage(skeleton));
+    this->e.setCPUOnly(true);
     this->e.loadInput(results);
     this->e.start();
 }

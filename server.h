@@ -66,6 +66,7 @@ private:
     QVector<QVector<MINUTIA>> fingerprints;
     int fragmentCounter;
     int bc_class;
+    int img_w, img_h;
 };
 
 #endif // SERVER_H
