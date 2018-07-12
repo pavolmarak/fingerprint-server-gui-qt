@@ -52,8 +52,11 @@ DEPENDPATH += $$PWD/../Matcher
 
 # CUDA
 unix:!macx: LIBS += -L/opt/cuda/lib64/ -lcudart
+unix:!macx: LIBS += -L/usr/local/cuda/lib64/ -lcudart
 INCLUDEPATH += /opt/cuda/include
 DEPENDPATH += /opt/cuda/include
+INCLUDEPATH += /usr/local/cuda/include
+DEPENDPATH += /usr/local/cuda/include
 
 # Suprema BioMini Slim
 unix:!macx: LIBS += -L/usr/local/lib/ -lUFMatcher

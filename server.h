@@ -64,6 +64,8 @@ private:
     QImage originalImage, skeletonImage;
     unsigned char* lastImageData;
     QVector<QVector<MINUTIA>> fingerprints;
+    int fragmentCounter;
+    int bc_class;
 };
 
 #endif // SERVER_H

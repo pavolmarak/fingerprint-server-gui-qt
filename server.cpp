@@ -7,6 +7,8 @@ Server::Server(QWidget *parent) :
 {
     ui->setupUi(this);
     this->lastImageData = nullptr;
+    this->fragmentCounter =0;
+    this->bc_class = -1;
     qRegisterMetaType<PREPROCESSING_RESULTS >("PREPROCESSING_RESULTS");
     qRegisterMetaType<EXTRACTION_RESULTS >("EXTRACTION_RESULTS");
     QObject::connect(&(this->server), SIGNAL(newConnection()), this, SLOT(connectionSlot()));
@@ -82,28 +84,55 @@ void Server::readSlot()
 {
     QByteArray rcvData = qobject_cast<QTcpSocket*>(sender())->readAll();
     this->img.append(rcvData);
-    qDebug() << rcvData.size() << " B reveived.";
-    if(this->img.size() == SUPREMA_IMG_SIZE){
-        qDebug() << "Whole image transferred.";
-        cv::Mat cv_img(IMG_HEIGHT, IMG_WIDTH, CV_8UC1,(unsigned char*)this->img.data());
-        p.loadInput(cv_img);
-        p.start();
-        for(int i=0;i<ui->client_list_table->rowCount();i++){
-            if((ui->client_list_table->item(i,0)->text() == qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString()) && (ui->client_list_table->item(i,1)->text().toInt() == qobject_cast<QTcpSocket*>(this->sender())->peerPort()))
-            {
-                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::green));
-                ui->image_from->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
-            }
-            else{
-                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::transparent));
-            }
-        }
-        this->lastImageData = (unsigned char*)calloc(this->img.size(),sizeof(unsigned char));
-        memcpy(this->lastImageData,(unsigned char*)this->img.data(),this->img.size());
-        this->originalImage = QImage(this->lastImageData,IMG_WIDTH,IMG_HEIGHT,QImage::Format_Grayscale8);
-        ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
+    qDebug() << rcvData.size() << " B received.";
+    //qDebug() << rcvData.data();
+
+    if(rcvData.size() >= 12 && this->fragmentCounter == 0){
+        this->fragmentCounter++;
+        QByteArray bca = rcvData.left(4);
+        QByteArray wa = rcvData.mid(4,4);
+        QByteArray ha = rcvData.mid(8,4);
+
+        QDataStream d1(&bca,QIODevice::ReadWrite);
+        QDataStream d2(&wa,QIODevice::ReadWrite);
+        QDataStream d3(&ha,QIODevice::ReadWrite);
+        int bc;
+        int widthImg;
+        int heightImg;
+
+        d1 >> bc;
+        this->bc_class = bc;
+        d2 >> widthImg;
+        d3 >> heightImg;
+        qDebug() << "Hlavicka prijata:\n" << "Pocet bajtov: " << bc << "\nSirka: " << widthImg << "\nVyska: " << heightImg;
+    }
+
+    if(this->img.size() == this->bc_class){
+        this->fragmentCounter = 0;
+        this->bc_class =0;
         this->img.clear();
     }
+//    if(this->img.size() == SUPREMA_IMG_SIZE){
+//        qDebug() << "Whole image transferred.";
+//        cv::Mat cv_img(IMG_HEIGHT, IMG_WIDTH, CV_8UC1,(unsigned char*)this->img.data());
+//         //p.loadInput(cv_img);
+//        // p.start();
+//        for(int i=0;i<ui->client_list_table->rowCount();i++){
+//            if((ui->client_list_table->item(i,0)->text() == qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString()) && (ui->client_list_table->item(i,1)->text().toInt() == qobject_cast<QTcpSocket*>(this->sender())->peerPort()))
+//            {
+//                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::green));
+//                ui->image_from->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
+//            }
+//            else{
+//                ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::transparent));
+//            }
+//        }
+//        this->lastImageData = (unsigned char*)calloc(this->img.size(),sizeof(unsigned char));
+//        memcpy(this->lastImageData,(unsigned char*)this->img.data(),this->img.size());
+//        this->originalImage = QImage(this->lastImageData,IMG_WIDTH,IMG_HEIGHT,QImage::Format_Grayscale8);
+//        ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
+//        this->img.clear();
+//    }
 }
 
 // slot function to handle manual client disconnection initiated by server
