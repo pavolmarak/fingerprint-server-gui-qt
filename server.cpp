@@ -83,7 +83,7 @@ void Server::readSlot()
     QByteArray rcvData = qobject_cast<QTcpSocket*>(sender())->readAll();
     this->img.append(rcvData);
     qDebug() << rcvData.size() << " B reveived.";
-    if(this->img.size() == IMG_SIZE){
+    if(this->img.size() == SUPREMA_IMG_SIZE){
         qDebug() << "Whole image transferred.";
         cv::Mat cv_img(IMG_HEIGHT, IMG_WIDTH, CV_8UC1,(unsigned char*)this->img.data());
         p.loadInput(cv_img);

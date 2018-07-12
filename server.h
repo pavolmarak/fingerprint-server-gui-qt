@@ -17,7 +17,7 @@
 // OpenCV
 #include "opencv2/world.hpp"
 
-#define IMG_SIZE 153600
+#define SUPREMA_IMG_SIZE 153600
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 480
 
