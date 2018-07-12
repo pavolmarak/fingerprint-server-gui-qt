@@ -87,7 +87,7 @@ void Server::readSlot()
     qDebug() << rcvData.size() << " B received.";
     //qDebug() << rcvData.data();
 
-    if(rcvData.size() >= 12 && this->fragmentCounter == 0){
+    if(rcvData.size() >= HEADER_SIZE && this->fragmentCounter == 0){
         this->fragmentCounter++;
         QByteArray bca = rcvData.left(4);
         QByteArray wa = rcvData.mid(4,4);
@@ -113,8 +113,9 @@ void Server::readSlot()
         this->fragmentCounter = 0;
         this->bc_class =0;
         qDebug() << "Whole image transferred.";
+        this->img = this->img.right(this->img.size()-HEADER_SIZE);
         cv::Mat cv_img(this->img_h, this->img_w, CV_8UC1,(unsigned char*)this->img.data());
-        p.setCPUOnly(true,QThread::idealThreadCount());
+        //p.setCPUOnly(true,QThread::idealThreadCount());
         qDebug() << "Using " << QThread::idealThreadCount() << "worker threads.";
         p.loadInput(cv_img);
         p.start();
@@ -130,7 +131,7 @@ void Server::readSlot()
         }
         this->lastImageData = (unsigned char*)calloc(this->img.size(),sizeof(unsigned char));
         memcpy(this->lastImageData,(unsigned char*)this->img.data(),this->img.size());
-        this->originalImage = QImage(this->lastImageData,IMG_WIDTH,IMG_HEIGHT,QImage::Format_Grayscale8);
+        this->originalImage = QImage(this->lastImageData,this->img_w, this->img_h,QImage::Format_Grayscale8);
         ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
         this->img.clear();
     }
@@ -230,7 +231,6 @@ void Server::preprocessingDoneSlot(PREPROCESSING_RESULTS results)
     cv::imshow("Skeleton", results.imgSkeleton);
     QImage skeleton(results.imgSkeleton.data, results.imgSkeleton.cols, results.imgSkeleton.rows, QImage::Format_Grayscale8);
     ui->img_box->setPixmap(QPixmap::fromImage(skeleton));
-    this->e.setCPUOnly(true);
     this->e.loadInput(results);
     this->e.start();
 }

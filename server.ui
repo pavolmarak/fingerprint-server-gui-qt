@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1187</width>
-    <height>705</height>
+    <width>1448</width>
+    <height>707</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -249,6 +249,9 @@
            <property name="text">
             <string/>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
           </widget>
          </item>
          <item>
@@ -356,8 +359,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1187</width>
-     <height>30</height>
+     <width>1448</width>
+     <height>25</height>
     </rect>
    </property>
   </widget>

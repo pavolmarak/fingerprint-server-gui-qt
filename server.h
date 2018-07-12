@@ -20,6 +20,7 @@
 #define SUPREMA_IMG_SIZE 153600
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 480
+#define HEADER_SIZE 12
 
 namespace Ui {
 class Server;
