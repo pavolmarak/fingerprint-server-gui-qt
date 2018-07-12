@@ -53,6 +53,8 @@ private slots:
 
     void on_save_image_button2_clicked();
 
+    void on_comboBox_activated(const QString &arg1);
+
 private:
     Ui::Server *ui;
     QTcpServer server;

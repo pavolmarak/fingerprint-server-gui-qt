@@ -67,6 +67,15 @@
               </layout>
              </item>
              <item>
+              <widget class="QComboBox" name="comboBox">
+               <item>
+                <property name="text">
+                 <string>127.0.0.1</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item>
               <layout class="QHBoxLayout" name="horizontalLayout_2">
                <item>
                 <widget class="QLabel" name="port_label">

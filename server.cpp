@@ -322,3 +322,8 @@ void Server::on_save_image_button2_clicked()
 {
     ui->img_box2->grab().save(QFileDialog::getSaveFileName(nullptr,"Save image as"));
 }
+
+void Server::on_comboBox_activated(const QString &arg1)
+{
+    ui->server_ip->setText(arg1);
+}
