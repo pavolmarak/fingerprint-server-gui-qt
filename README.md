@@ -3,8 +3,9 @@ This repository houses source code for an experimental biometric server app comm
 
 Fingerprint authentication is based on the collection of our libraries abbreviatedly named as DBOX. There are 3 standalone libraries that together form up DBOX, namely:
 
-* a
-* b
+* [Image preprocessing](https://github.com/pavolmarak/Preprocessing)
+* Feature extraction (currently supports extraction of Level-2 features)
+* Feature matching (currently supports 2 matching algorithms, parallel Bozorth3 and proprietary Suprema matching algorithm from BioMini SDK)
 
 Here is the screenshot of the app's GUI running under Manjaro Linux with KDE Plasma desktop environment.
 
