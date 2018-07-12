@@ -87,18 +87,21 @@ void Server::readSlot()
     qDebug() << rcvData.size() << " B received.";
     //qDebug() << rcvData.data();
 
-    if(rcvData.size() >= HEADER_SIZE && this->fragmentCounter == 0){
+    if(rcvData.size() >= CONTROL_DATA_SIZE && this->fragmentCounter == 0){
         this->fragmentCounter++;
         QByteArray bca = rcvData.left(4);
         QByteArray wa = rcvData.mid(4,4);
         QByteArray ha = rcvData.mid(8,4);
+        QByteArray swid = rcvData.mid(12,4);
 
         QDataStream d1(&bca,QIODevice::ReadWrite);
         QDataStream d2(&wa,QIODevice::ReadWrite);
         QDataStream d3(&ha,QIODevice::ReadWrite);
+        QDataStream d4(&swid,QIODevice::ReadWrite);
         int bc;
         int widthImg;
         int heightImg;
+        int windowID;
 
         d1 >> bc;
         this->bc_class = bc;
@@ -106,17 +109,19 @@ void Server::readSlot()
         this->img_w = widthImg;
         d3 >> heightImg;
         this->img_h = heightImg;
-        qDebug() << "Hlavicka prijata:\n" << "Pocet bajtov: " << bc << "\nSirka: " << widthImg << "\nVyska: " << heightImg;
+        d4 >> windowID;
+        this->windowID = windowID;
+        qDebug() << "Hlavicka prijata:\n" << "Pocet bajtov: " << bc << "\nSirka: " << widthImg << "\nVyska: " << heightImg << "\nOkno: " << windowID;
     }
 
+    // when image is completely transferred
     if(this->img.size() == this->bc_class){
         this->fragmentCounter = 0;
         this->bc_class =0;
         qDebug() << "Whole image transferred.";
-        this->img = this->img.right(this->img.size()-HEADER_SIZE);
+        this->img = this->img.right(this->img.size()-CONTROL_DATA_SIZE);
         cv::Mat cv_img(this->img_h, this->img_w, CV_8UC1,(unsigned char*)this->img.data());
-        //p.setCPUOnly(true,QThread::idealThreadCount());
-        qDebug() << "Using " << QThread::idealThreadCount() << "worker threads.";
+        qDebug() << QThread::idealThreadCount() << "worker thread(s) available.";
         p.loadInput(cv_img);
         p.start();
         for(int i=0;i<ui->client_list_table->rowCount();i++){
@@ -124,7 +129,12 @@ void Server::readSlot()
             {
                 ui->client_list_table->item(i,3)->setBackgroundColor(QColor("#4286f4"));
                 ui->client_list_table->item(i,3)->setTextColor(QColor("#ffffff"));
-                ui->image_from->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
+                if(this->windowID == 1){
+                    ui->image_from->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
+                }
+                else if(this->windowID == 2){
+                    ui->image_from2->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
+                }
             }
             else{
                 ui->client_list_table->item(i,3)->setBackgroundColor(QColor(Qt::transparent));
@@ -133,7 +143,13 @@ void Server::readSlot()
         this->lastImageData = (unsigned char*)calloc(this->img.size(),sizeof(unsigned char));
         memcpy(this->lastImageData,(unsigned char*)this->img.data(),this->img.size());
         this->originalImage = QImage(this->lastImageData,this->img_w, this->img_h,QImage::Format_Grayscale8);
-        ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
+        if(this->windowID == 1){
+            ui->img_box->setPixmap(QPixmap::fromImage(this->originalImage));
+        }
+        else if(this->windowID == 2){
+            ui->img_box2->setPixmap(QPixmap::fromImage(this->originalImage));
+        }
+
         this->img.clear();
     }
 }
@@ -229,9 +245,8 @@ void Server::preprocessingDoneSlot(PREPROCESSING_RESULTS results)
 {
     qDebug() << "Preprocessing done.";
     this->skeletonImage = QImage(results.imgSkeleton.data,results.imgSkeleton.cols,results.imgSkeleton.rows,QImage::Format_Grayscale8);
-    cv::imshow("Skeleton", results.imgSkeleton);
+    //cv::imshow("Skeleton", results.imgSkeleton);
     QImage skeleton(results.imgSkeleton.data, results.imgSkeleton.cols, results.imgSkeleton.rows, QImage::Format_Grayscale8);
-    ui->img_box->setPixmap(QPixmap::fromImage(skeleton));
     this->e.loadInput(results);
     this->e.start();
 }
@@ -239,7 +254,14 @@ void Server::preprocessingDoneSlot(PREPROCESSING_RESULTS results)
 void Server::extractionDoneSlot(EXTRACTION_RESULTS results)
 {
     qDebug() << "Extraction done.";
-    QImage tmp = (ui->img_box->grab().toImage());
+    QImage tmp;
+    if(this->windowID == 1){
+        tmp = ui->img_box->grab().toImage();
+    }
+    else if(this->windowID == 2){
+        tmp = ui->img_box2->grab().toImage();
+    }
+
     QPainter painter(&tmp);
     QPen redpen;
     QPen bluepen;
@@ -257,7 +279,13 @@ void Server::extractionDoneSlot(EXTRACTION_RESULTS results)
         }
         painter.drawEllipse(m.xy,3,3);
     }
-    ui->img_box->setPixmap(QPixmap::fromImage(tmp));
+    if(this->windowID == 1){
+        ui->img_box->setPixmap(QPixmap::fromImage(tmp));
+    }
+    else if(this->windowID == 2){
+        ui->img_box2->setPixmap(QPixmap::fromImage(tmp));
+    }
+
     this->fingerprints.push_back(results.minutiaePredictedFixed);
     if(this->fingerprints.size()==2){
         MATCHER matcher = suprema;
@@ -274,7 +302,9 @@ void Server::extractionDoneSlot(EXTRACTION_RESULTS results)
 
 void Server::verificationDoneSlot(bool success)
 {
-    qDebug() << "VERIF DONE:" << success;
+    qDebug() << "VERIFICATION DONE:" << success;
+    ui->verification_result->setText(QString::number(success));
+    ui->verification_result->setAlignment(Qt::AlignCenter);
 }
 
 // function to the start server and make it listen on predefined port for new connections
@@ -324,12 +354,14 @@ void Server::on_save_image_button2_clicked()
     ui->img_box2->grab().save(QFileDialog::getSaveFileName(nullptr,"Save image as"));
 }
 
-void Server::on_comboBox_activated(const QString &arg1)
-{
-    ui->server_ip->setText(arg1);
-}
+
 
 void Server::on_save_conn_help_clicked()
 {
     QMessageBox::about(this,"Help", "<b>Help</b> goes <a href='www.google.com'>here</a>.<br>Sample list:<ul><li>First</li><li>Second</li></ul>");
+}
+
+void Server::on_conn_preset_activated(const QString &arg1)
+{
+    ui->server_ip->setText(arg1);
 }

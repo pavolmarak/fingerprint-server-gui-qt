@@ -10,6 +10,7 @@
 #include <QDateTime>
 #include <QTableWidget>
 #include <QMessageBox>
+#include <QLabel>
 
 // DBOX modules
 #include "preprocessing.h"
@@ -19,10 +20,16 @@
 // OpenCV
 #include "opencv2/world.hpp"
 
+// Suprema BioMini Slim image size in bytes
 #define SUPREMA_IMG_SIZE 153600
-#define IMG_WIDTH 320
-#define IMG_HEIGHT 480
-#define HEADER_SIZE 12
+
+// Suprema BioMini Slim image size in pixels
+#define SUPREMA_IMG_WIDTH 320
+#define SUPREMA_IMG_HEIGHT 480
+
+// control data size in bytes
+#define CONTROL_DATA_SIZE 16
+
 
 namespace Ui {
 class Server;
@@ -55,9 +62,9 @@ private slots:
 
     void on_save_image_button2_clicked();
 
-    void on_comboBox_activated(const QString &arg1);
-
     void on_save_conn_help_clicked();
+
+    void on_conn_preset_activated(const QString &arg1);
 
 private:
     Ui::Server *ui;
@@ -74,6 +81,7 @@ private:
     int fragmentCounter;
     int bc_class;
     int img_w, img_h;
+    int windowID;
 };
 
 #endif // SERVER_H
