@@ -66,6 +66,8 @@ private slots:
 
     void on_conn_preset_activated(const QString &arg1);
 
+    void on_history_calendar_clicked(const QDate &date);
+
 private:
     Ui::Server *ui;
     QTcpServer server;

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1647</width>
-    <height>705</height>
+    <width>1662</width>
+    <height>777</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -336,14 +336,26 @@
           </spacer>
          </item>
          <item>
-          <widget class="QLabel" name="history_label">
-           <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;History&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <widget class="QTabWidget" name="utils_tab">
+           <property name="currentIndex">
+            <number>0</number>
            </property>
+           <widget class="QWidget" name="history_tab">
+            <attribute name="title">
+             <string>History</string>
+            </attribute>
+            <layout class="QVBoxLayout" name="verticalLayout_7">
+             <item>
+              <widget class="QCalendarWidget" name="history_calendar"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="tab_2">
+            <attribute name="title">
+             <string>Other</string>
+            </attribute>
+           </widget>
           </widget>
-         </item>
-         <item>
-          <widget class="QCalendarWidget" name="history_calendar"/>
          </item>
          <item>
           <spacer name="verticalSpacer_2">
@@ -579,8 +591,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1647</width>
-     <height>30</height>
+     <width>1662</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

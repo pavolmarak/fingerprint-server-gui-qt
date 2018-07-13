@@ -365,3 +365,8 @@ void Server::on_conn_preset_activated(const QString &arg1)
 {
     ui->server_ip->setText(arg1);
 }
+
+void Server::on_history_calendar_clicked(const QDate &date)
+{
+    QMessageBox::about(this,"Calendar", "What happened on this day?");
+}
