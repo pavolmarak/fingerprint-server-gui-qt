@@ -127,7 +127,7 @@ void Server::readSlot()
         for(int i=0;i<ui->client_list_table->rowCount();i++){
             if((ui->client_list_table->item(i,0)->text() == qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString()) && (ui->client_list_table->item(i,1)->text().toInt() == qobject_cast<QTcpSocket*>(this->sender())->peerPort()))
             {
-                ui->client_list_table->item(i,3)->setBackgroundColor(QColor("#4286f4"));
+                ui->client_list_table->item(i,3)->setBackgroundColor(QColor("#42b3f4"));
                 ui->client_list_table->item(i,3)->setTextColor(QColor("#ffffff"));
                 if(this->windowID == 1){
                     ui->image_from->setText(qobject_cast<QTcpSocket*>(this->sender())->peerAddress().toString() + ":" + QString::number(qobject_cast<QTcpSocket*>(this->sender())->peerPort()) + ", " + QDateTime::currentDateTime().toString("dd. MMM. yyyy") + ", " + QDateTime::currentDateTime().time().toString());
