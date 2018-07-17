@@ -11,6 +11,9 @@
 #include <QTableWidget>
 #include <QMessageBox>
 #include <QLabel>
+#include <QPushButton>
+#include <QStatusBar>
+#include <QTimer>
 
 // DBOX modules
 #include "preprocessing.h"
@@ -42,6 +45,8 @@ class Server : public QMainWindow
 public:
     explicit Server(QWidget *parent = 0);
     ~Server();
+    void setServerStatus(bool);
+    void statusBarMsg(const QString& msg, quint64 time);
 
 public slots:
     void connectionSlot();
@@ -65,8 +70,6 @@ private slots:
     void on_save_conn_help_clicked();
 
     void on_conn_preset_activated(const QString &arg1);
-
-    void on_history_calendar_clicked(const QDate &date);
 
 private:
     Ui::Server *ui;

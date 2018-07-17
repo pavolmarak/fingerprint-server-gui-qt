@@ -8,5 +8,8 @@ int main(int argc, char *argv[])
     server.setWindowIcon(QIcon("server.png"));
     server.show();
 
+    // server status setup
+    server.setServerStatus(false);
+
     return a.exec();
 }

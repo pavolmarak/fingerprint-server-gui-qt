@@ -25,6 +25,26 @@ Server::Server(QWidget *parent) :
     ui->client_list_table->setColumnWidth(2, ui->client_list_table->width()/6);
     ui->client_list_table->setColumnWidth(3, ui->client_list_table->width()/6);
     ui->client_list_table->setColumnWidth(4, ui->client_list_table->width()/6);
+
+    //server stop button gets disabled
+    ui->stop_server_button->setEnabled(false);
+
+    // create server status indicator in the status bar
+    QLabel* server_status_label = new QLabel("Server status: ");
+    server_status_label->setObjectName("server_status_label");
+    QLabel* server_status_image = new QLabel();
+    server_status_image->setObjectName("server_status_image");
+    ui->statusBar->addWidget(server_status_label);
+    ui->statusBar->addWidget(server_status_image);
+
+    // add custom text widget to status bar
+    QFrame* frmV = new QFrame();
+    frmV->setFrameShape(QFrame::VLine);
+    frmV->setFrameShadow(QFrame::Sunken);
+    ui->statusBar->addWidget(frmV);
+    QLabel* status_bar_text = new QLabel();
+    status_bar_text->setObjectName("status_bar_text");
+    ui->statusBar->addWidget(status_bar_text);
 }
 
 Server::~Server()
@@ -33,14 +53,40 @@ Server::~Server()
     if(this->server.isListening()){
         this->server.close();
         qDebug() << "Server is stopped.";
-        ui->statusBar->showMessage("Server is stopped.");
+        this->setServerStatus(false);
     }
     delete ui;
+}
+
+void Server::setServerStatus(bool status)
+{
+    QList<QObject*> qol = ui->statusBar->children();
+    foreach (QObject* item, qol) {
+        if(item->objectName() == "server_status_image"){
+            qobject_cast<QLabel*>(item)->setFixedSize(ui->statusBar->height()/2, ui->statusBar->height()/2);
+            if(status){
+                qobject_cast<QLabel*>(item)->setPixmap(QPixmap("green_light.png"));
+            }
+            else{
+                qobject_cast<QLabel*>(item)->setPixmap(QPixmap("red_light.png"));
+            }
+            qobject_cast<QLabel*>(item)->setScaledContents(true);
+        }
+    }
+}
+
+void Server::statusBarMsg(const QString &msg, quint64 time)
+{
+    this->findChild<QLabel*>("status_bar_text")->setText(msg);
+    QTimer::singleShot(time, this, [this]() {
+        this->findChild<QLabel*>("status_bar_text")->setText("");
+    });
 }
 
 // slot for a new connection
 void Server::connectionSlot()
 {
+    this->statusBarMsg("A new connection has been established",3000);
     // storing the new connection as current connection
     this->tcpsocket =  this->server.nextPendingConnection();
 
@@ -314,12 +360,12 @@ void Server::on_start_server_button_clicked()
     ret ? qDebug() << "Server was started sucessfully." : qDebug() << "Server failed to start.";
     if(this->server.isListening()){
         qDebug() << "Server is listening ...";
-        ui->statusBar->showMessage("Server is listening ...");
         ui->start_server_button->setEnabled(false);
+        this->setServerStatus(true);
+        ui->stop_server_button->setEnabled(true);
     }
     else{
         qDebug() << "Server is NOT listening ...";
-        ui->statusBar->showMessage("Server is NOT listening ...");
     }
 }
 
@@ -330,7 +376,8 @@ void Server::on_stop_server_button_clicked()
         this->server.close();
         ui->start_server_button->setEnabled(true);
         qDebug() << "Server is stopped.";
-        ui->statusBar->showMessage("Server is stopped.");
+        this->setServerStatus(false);
+        ui->stop_server_button->setEnabled(false);
     }
 }
 
@@ -364,9 +411,4 @@ void Server::on_save_conn_help_clicked()
 void Server::on_conn_preset_activated(const QString &arg1)
 {
     ui->server_ip->setText(arg1);
-}
-
-void Server::on_history_calendar_clicked(const QDate &date)
-{
-    QMessageBox::about(this,"Calendar", "What happened on this day?");
 }
